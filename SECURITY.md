@@ -4,13 +4,17 @@ ForgeFlow is pre-alpha software. Do not use it as a sandbox or put secrets,
 personal information, confidential datasets, or proprietary code in public
 workflows, issue reports, test fixtures, or execution histories.
 
-The current checkpoint executes built-in value/assert steps only. YAML aliases,
+The current checkpoint executes built-in value/assert steps and HTTP GET/HEAD. YAML aliases,
 anchors, merges, explicit tags, object construction, and arbitrary workflow code
 are rejected. Parsing has size, depth, event, and numeric-conversion budgets.
-HTTP execution and offline replay are not available yet.
+Offline replay is not available yet.
 
-The intended HTTP MVP will use explicit secret references and field-level capture,
-but executing a workflow will remain a trusted-user action. The future replay
+HTTP uses explicit secret references, field-level capture, TLS verification, and
+isolated clients without redirects or environment proxies. Executing a workflow
+is a trusted-user action and can contact local services. GET/HEAD intent does not
+guarantee a remote server has no side effects. No external exactly-once guarantee exists.
+Known-secret captures are excluded from storage; unknown private fields still require care.
+The future replay
 implementation must never fall back to live network activity.
 
 Local SQLite data is not encrypted. Privacy filtering cannot detect every secret

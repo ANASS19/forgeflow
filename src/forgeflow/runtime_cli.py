@@ -14,7 +14,8 @@ from forgeflow.cli_output import emit
 from forgeflow.config import data_directory
 from forgeflow.doctor import check_workflow
 from forgeflow.domain import ErrorCode, ForgeFlowError, exit_code
-from forgeflow.engine.runner import ensure_supported, execute
+from forgeflow.engine.http import HttpHandler
+from forgeflow.engine.runner import execute
 from forgeflow.storage.repository import Repository, Snapshot
 from forgeflow.workflow import WorkflowLoadError, load_workflow
 from forgeflow.workflow.graph import build_graph
@@ -45,7 +46,7 @@ def errors(json_output: bool) -> Iterator[None]:
                 "status": "error",
                 "code": error.code,
                 "message": (
-                    "This checkpoint executes value/assert steps only; HTTP execution is planned."
+                    "HTTP retries beyond one attempt are not implemented in this checkpoint."
                     if error.code == ErrorCode.ACTION_UNAVAILABLE
                     else error.code.value
                 ),
@@ -54,7 +55,13 @@ def errors(json_output: bool) -> Iterator[None]:
         )
         raise typer.Exit(
             2
-            if error.code == ErrorCode.ACTION_UNAVAILABLE or error.code.value.startswith("REPLAY_")
+            if error.code
+            in {
+                ErrorCode.ACTION_UNAVAILABLE,
+                ErrorCode.SECRET_MISSING,
+                ErrorCode.SECRET_HEADER_INVALID,
+            }
+            or error.code.value.startswith("REPLAY_")
             else 3
         ) from None
     except (SQLAlchemyError, OSError, ValueError):
@@ -95,16 +102,16 @@ def run(
     data_dir: DirectoryOption = None,
     json_output: JsonOption = False,
 ) -> None:
-    """Execute a value/assert workflow; parent links never reuse earlier outputs."""
+    """Execute a workflow with pure steps or HTTP GET/HEAD; parent links never reuse outputs."""
     with errors(json_output):
         workflow = load_workflow(file)
         build_graph(workflow)
-        ensure_supported(workflow)
         findings = tuple(
             item for item in check_workflow(workflow, check_env=True) if item.severity == "error"
         )
         if findings:
             raise WorkflowLoadError(findings)
+        handler = HttpHandler(workflow)
         directory = data_directory(data_dir)
         with Repository(directory, writable=True) as repository:
             result = asyncio.run(
@@ -112,6 +119,7 @@ def run(
                     workflow,
                     repository,
                     parent_id=parent,
+                    handler=handler,
                     progress=None
                     if json_output
                     else lambda name, state: typer.echo(f"{name}: {state}", err=True),

@@ -5,8 +5,8 @@
 ForgeFlow is an independent, open-source, local-first workflow execution and
 debugging system for API developers. This experimental checkpoint implements
 safe loading, schema/DAG/reference validation, static CLI Doctor, async value/assert
-execution, SQLite history, and privacy-controlled recording primitives.
-HTTP execution, retries, replay, and execution-time Doctor remain planned.
+execution, HTTP GET/HEAD, SQLite history, and privacy-controlled recording primitives.
+Retry scheduling, replay, and execution-time Doctor remain planned.
 Only implement the session or task explicitly authorized by the owner.
 
 ## Architecture boundaries

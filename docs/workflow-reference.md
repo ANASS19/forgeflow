@@ -3,8 +3,7 @@
 Loading and local structural validation are available through
 `forgeflow.workflow.load_workflow(path)` and `parse_workflow(content: bytes)`.
 Neither API executes a workflow. The CLI's `validate` and `doctor` commands add
-dependency and reference-target analysis. `run` executes only value/assert graphs;
-HTTP is schema-only in this checkpoint.
+dependency and reference-target analysis. `run` executes value/assert and HTTP GET/HEAD graphs.
 
 ## Input and safety limits
 
@@ -118,5 +117,12 @@ Pydantic's model APIs directly is intended for internal typed code, not for
 rendering untrusted validation errors. Do not log loaded workflow objects,
 raw Pydantic `.errors()`, exception locals, or parser internals.
 
-No HTTP execution, retries, offline replay, or web interface is implemented in
-this checkpoint. See the root README for the working execution/history commands.
+HTTP response JSON is UTF-8, finite, duplicate-key-free, and limited to 1 MiB and
+32 collection levels. Captured output is limited to 256 KiB. Only explicitly
+declared JSON pointers and the numeric HTTP status become outputs. Compressed
+bodies and implicit redirects are unsupported; uncaptured/HEAD bodies are not read.
+Secret variables must be present and resolve to printable ASCII header text.
+Secret values remain in memory and are registered with the existing recording privacy filter.
+
+Only one attempt is executed. `retry.max_attempts` greater than one is rejected
+until retry support lands. Offline replay and a web interface are not implemented.

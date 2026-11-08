@@ -16,7 +16,7 @@ project dependencies globally. If the required Python interpreter is unavailable
 install it separately before running this command; automatic Python downloads
 are disabled by the documented setup command.
 
-Typer, Pydantic v2, PyYAML, SQLAlchemy, and Alembic are the direct runtime
+Typer, Pydantic v2, PyYAML, SQLAlchemy, Alembic, and HTTPX are the direct runtime
 dependencies. pytest, pytest-asyncio, Ruff, mypy, PyYAML typing stubs, and Hatchling
 are development dependencies. Hatchling is also the PEP 517 build backend and
 is installed locally so packaging tests can build without network access.
@@ -74,6 +74,6 @@ retain their applicable copyright. Automated agents must obtain explicit task
 authorization before remote Git operations, publishing, or releases. Local
 commits also require authorization when working on behalf of the owner.
 
-See [ROADMAP.md](ROADMAP.md) and existing GitHub issues for planned work. HTTP
-execution and replay are not current features. Keep implementation PRs focused
+See [ROADMAP.md](ROADMAP.md) and existing GitHub issues for planned work. Retry
+scheduling and replay are not current features. Keep implementation PRs focused
 on one tested behavior, describe remaining limitations, and link the relevant issue.

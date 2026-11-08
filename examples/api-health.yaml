@@ -25,7 +25,7 @@ steps:
     capture:
       service_state: /status
     retry:
-      max_attempts: 3
+      max_attempts: 1
   - id: check
     type: assert
     needs: [fetch]

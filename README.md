@@ -9,7 +9,7 @@ execution and debugging system for API developers.
 
 **Experimental development checkpoint: `0.1.0.dev0`.** ForgeFlow validates YAML
 workflows, explains configuration problems, and executes dependency graphs of
-built-in value and assertion steps with persistent local execution evidence.
+built-in value/assert steps and HTTP GET/HEAD with persistent local execution evidence.
 The broader API-workflow debugging product is actively being developed.
 
 | Capability | Current status |
@@ -22,7 +22,7 @@ The broader API-workflow debugging product is actively being developed.
 | SQLite history, inspection, fresh linked runs | Working |
 | Abandoned-run recovery and explicit history pruning | Working |
 | Atomic attempt events and privacy-filtered output recording | Working foundation |
-| HTTP GET/HEAD | Schema validation only; execution is unavailable |
+| HTTP GET/HEAD with explicit JSON captures | Working; one attempt per step |
 | Bounded retries, full Flight Recorder, offline replay | Planned |
 | Shell execution, distributed workers, web UI | Outside the initial MVP |
 
@@ -32,9 +32,9 @@ forgeflow --version
 python -m forgeflow --help
 ```
 
-Running `forgeflow` without arguments also displays help. No HTTP requests are
-made by this checkpoint. Running an HTTP-containing workflow fails explicitly
-before execution or storage initialization.
+Running `forgeflow` without arguments also displays help. HTTP workflows contact
+the destinations explicitly declared in their files; review workflows before running them.
+Retries beyond one attempt are rejected explicitly until retry scheduling is implemented.
 
 ## Try a working demonstration
 
@@ -48,6 +48,21 @@ This uses the actual CLI and temporary local storage to validate a workflow,
 run a successful graph, record an assertion failure, inspect its error code and
 skipped dependant, and verify that the independent branch still succeeds. It
 also verifies both runs appear in history. No service, API key, or network is needed.
+
+For a local HTTP demonstration, start a synthetic API in one terminal:
+
+```console
+uv run --locked python -m http.server 8000 --bind 127.0.0.1 --directory examples/http-api
+```
+
+In another terminal:
+
+```console
+uv run --locked forgeflow run examples/http-local.yaml --data-dir .forgeflow
+```
+
+This performs GET with an explicit JSON capture, HEAD without reading a body,
+and an assertion on the captured field. Stop the fixture server with Ctrl+C.
 
 To explore the commands manually:
 
@@ -127,7 +142,7 @@ minimal metadata and explicitly selected response fields. Offline replay will
 fail clearly if required recorded values are unavailable and will never fall
 back to live requests. HTTP HEAD steps will not support JSON-body captures.
 
-HTTP execution and replay are not implemented. There is no arbitrary-code or
+Retry scheduling and replay are not implemented. There is no arbitrary-code or
 subprocess workflow action planned for the MVP, and no exactly-once execution
 guarantee. See [ROADMAP.md](ROADMAP.md) for completed and upcoming milestones.
 
@@ -138,6 +153,7 @@ guarantee. See [ROADMAP.md](ROADMAP.md) for completed and upcoming milestones.
 - `src/forgeflow/__main__.py`: `python -m forgeflow` entry point.
 - `src/forgeflow/workflow/`: bounded loader, strict models, and safe diagnostics.
 - `src/forgeflow/engine/`: async DAG scheduling and deterministic pure handlers.
+- `src/forgeflow/engine/http.py`: bounded HTTPX adapter with isolated clients and explicit secrets.
 - `src/forgeflow/storage/`: SQLAlchemy repository, SQLite migrations, and writer lock.
 - `src/forgeflow/recorder/`: privacy filtering and safe recording-plan snapshots.
 - `tests/`: CLI, import, distribution metadata, and isolated-install checks.
@@ -164,8 +180,10 @@ See [architecture and failure semantics](docs/architecture.md).
 
 - This is a work in progress, not a production reliability claim.
 - Python 3.12 is the only supported Python series.
-- Only value/assert workflows execute. HTTP schemas can be validated, but
-  requests, retries, replay, and execution-time Doctor analysis remain planned.
+- HTTP is restricted to GET/HEAD with TLS verification, no redirects or ambient
+  proxies/cookies, a 1 MiB JSON-response limit, and explicit captures. Compressed
+  response bodies are not supported. No full response body is recorded.
+- HTTP retries beyond one attempt, replay, and execution-time Doctor remain planned.
 - Recovery marks abandoned work interrupted; it never resumes it automatically.
 - Local SQLite storage must be on a local disk, not a network/synchronized folder.
 - Stored captured values are plaintext. Filtering is conservative and heuristic;
@@ -196,9 +214,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development details and
 ## Security and privacy
 
 Never commit credentials, confidential data, personal data, private recordings,
-or environment files. Use synthetic data in tests and examples. The CLI executes
-only built-in pure steps; it does not perform network requests. Static Doctor
-resolves no secrets unless `--check-env` is explicitly supplied, which checks
+or environment files. Use synthetic data in tests and examples. HTTP workflows
+are trusted-user actions, not a network sandbox. Secret headers are prepared only
+at execution time and reflected known-secret values are excluded from capture storage.
+Static Doctor checks no secrets unless `--check-env` is explicitly supplied, which checks
 presence only. Local development installation may download dependencies.
 Read [SECURITY.md](SECURITY.md) before reporting a problem.
 

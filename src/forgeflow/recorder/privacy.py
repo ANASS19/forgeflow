@@ -52,7 +52,7 @@ class Privacy:
             return any(self.restricted(child, name=key) for key, child in value.items())
         if isinstance(value, list):
             return any(self.restricted(child) for child in value)
-        return False
+        return any(secret and secret in encoded(value) for secret in self.secrets)
 
     def record(self, value: JsonValue, *, name: str = "") -> dict[str, JsonValue]:
         if self.restricted(value, name=name):

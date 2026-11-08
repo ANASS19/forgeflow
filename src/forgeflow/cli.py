@@ -16,7 +16,7 @@ app = typer.Typer(
     name="forgeflow",
     help=(
         "ForgeFlow: local-first workflow debugging for API developers. "
-        "Validate YAML, diagnose configuration, and execute value/assert workflows "
+        "Validate YAML, diagnose configuration, and execute value/assert/HTTP workflows "
         "with local history."
     ),
     add_completion=False,

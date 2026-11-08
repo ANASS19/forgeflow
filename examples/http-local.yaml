@@ -1,0 +1,25 @@
+# Serve examples/http-api locally on port 8000 before running this workflow.
+schema_version: 1
+name: local-http-health
+steps:
+  - id: fetch
+    type: http
+    request:
+      method: GET
+      url: http://127.0.0.1:8000/health.json
+    capture:
+      service_state: /status
+  - id: probe
+    type: http
+    needs: [fetch]
+    request:
+      method: HEAD
+      url: http://127.0.0.1:8000/health.json
+  - id: check
+    type: assert
+    needs: [fetch, probe]
+    left:
+      ref: fetch.outputs.service_state
+    op: eq
+    right:
+      literal: ok

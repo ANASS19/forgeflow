@@ -147,7 +147,7 @@ def test_wheel_metadata_and_contents(installed_wheel: WheelInstallation) -> None
     assert {
         re.split(r"[<>=!~\[;\s]", requirement, maxsplit=1)[0].lower()
         for requirement in requirements
-    } == {"typer", "pydantic", "pyyaml", "sqlalchemy", "alembic"}
+    } == {"typer", "pydantic", "pyyaml", "sqlalchemy", "alembic", "httpx"}
     assert "forgeflow/py.typed" in names
     assert any(name.endswith(".dist-info/licenses/LICENSE") for name in names)
     assert not any(name.startswith(("tests/", ".venv/", ".git/")) for name in names)

@@ -46,13 +46,31 @@ def test_empty_history_does_not_initialize_storage(tmp_path: Path) -> None:
     assert not directory.exists()
 
 
-def test_http_execution_is_explicitly_unavailable_before_storage(tmp_path: Path) -> None:
+def test_retry_configuration_is_explicitly_unavailable_before_storage(tmp_path: Path) -> None:
     directory = tmp_path / "absent"
+    source = tmp_path / "workflow.yaml"
+    source.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "name": "retry",
+                "steps": [
+                    {
+                        "id": "fetch",
+                        "type": "http",
+                        "request": {"method": "GET", "url": "https://example.test"},
+                        "retry": {"max_attempts": 2},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
     result = CliRunner().invoke(
         app,
         [
             "run",
-            "examples/api-health.yaml",
+            str(source),
             "--data-dir",
             str(directory),
             "--json",

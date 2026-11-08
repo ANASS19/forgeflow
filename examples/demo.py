@@ -52,7 +52,7 @@ def main() -> None:
                     "failure_codes": codes,
                     "steps_after_failure": states,
                     "history_count": len(runs),
-                    "network_requests": "none; this checkpoint executes pure steps only",
+                    "network_requests": "none; this demonstration uses pure steps only",
                 },
                 indent=2,
             )

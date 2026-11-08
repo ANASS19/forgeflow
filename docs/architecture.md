@@ -1,12 +1,14 @@
 # Architecture and failure semantics
 
 ForgeFlow is a typed Python modular monolith. The current execution engine runs
-only value and assertion steps; HTTP is a validated schema, not a live action.
+value/assert steps and HTTP GET/HEAD, with one attempt per step.
 
 ## Boundaries
 
 - `workflow/`: bounded YAML loading, strict models, explicit edges, references, and cycle paths.
 - `engine/`: readiness, bounded async tasks, operand resolution, and pure-step evaluation.
+- `engine/http.py`: isolated HTTPX clients, secret preflight, and normalized outcomes.
+- `engine/http_data.py`: bounded JSON decoding and explicit JSON-pointer extraction.
 - `storage/`: SQLAlchemy mappings, SQLite transactions, immutable Alembic migration, and OS lock.
 - `recorder/privacy.py`: retained-value eligibility and request-free recording-plan snapshots.
 - `cli.py`, `runtime_cli.py`, and `doctor.py`: commands, safe output, and static diagnosis.

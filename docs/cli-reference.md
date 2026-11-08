@@ -8,7 +8,7 @@ details, and captured values are not displayed in errors or default inspection.
 |---|---|
 | `forgeflow validate FILE` | Validate YAML, schema, DAG, and output-reference contracts |
 | `forgeflow doctor FILE [--check-env]` | Static diagnostics; optional secret-presence checks |
-| `forgeflow run FILE [--parent RUN_ID]` | Execute a fresh value/assert workflow |
+| `forgeflow run FILE [--parent RUN_ID]` | Execute a fresh value/assert/HTTP GET/HEAD workflow |
 | `forgeflow history` | List up to 100 latest local runs |
 | `forgeflow inspect RUN_ID` | Inspect states, attempts, causes, events, and value availability |
 | `forgeflow recover` | Mark abandoned runs and unfinished work interrupted |
@@ -32,5 +32,6 @@ Exit codes: 0 success; 1 workflow failure; 2 invalid workflow/arguments or unava
 action; 3 storage/lock/infrastructure failure; 124 workflow deadline; 130 cancellation.
 An exhausted attempt timeout fails its step and therefore the workflow with code 1.
 
-HTTP-containing workflows can be validated but cannot run. There is no `replay`
+HTTP executes one attempt; `retry.max_attempts` greater than one is currently
+rejected before storage or request dispatch. There is no `replay`
 command yet. `doctor` currently analyzes workflow files, not prior executions.

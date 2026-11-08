@@ -15,14 +15,15 @@ for learning, testing, and debugging small pure-step workflows locally.
 - SQLite history/inspection, atomic attempt events, and privacy-filtered value recording.
 - OS writer exclusion, abandoned-run recovery, fresh linked runs, and explicit pruning.
 - Offline success/failure demonstration and cross-platform CI configuration.
+- HTTPX GET/HEAD execution, bounded explicit JSON captures, secret preflight, and loopback tests.
 
-## Next: safe HTTP execution
+## Completed: initial safe HTTP execution
 
-- Implement GET/HEAD with HTTPX, isolated cookies, TLS verification, and no redirects by default.
-- Enforce streamed byte/depth limits and strict JSON capture semantics.
-- Resolve explicit secret references only at execution time; omit request data from persistence.
-- Record normalized outcomes without raw URLs, headers, query strings, or exception text.
-- Verify behavior using mock transports and a loopback API, never public service credentials.
+- GET/HEAD with isolated cookies, TLS verification, and no redirects or ambient proxies.
+- Streamed byte/depth limits and strict JSON capture semantics, including HEAD restrictions.
+- Explicit secret references resolved before execution; request data omitted from persistence.
+- Normalized outcomes without raw URLs, headers, query strings, or exception text.
+- Mock-transport and loopback API tests without public service credentials.
 
 ## Bounded retries and recovery hardening
 
