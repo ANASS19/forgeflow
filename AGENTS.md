@@ -3,10 +3,10 @@
 ## Purpose and current scope
 
 ForgeFlow is an independent, open-source, local-first workflow execution and
-debugging system for API developers. The current implementation is Sprint 1,
-MVP development: safe loading, schema/DAG/reference validation, and static CLI
-Doctor are implemented. Execution, storage, recording, and replay are being added
-in verified milestones under the owner's autonomous-development authorization.
+debugging system for API developers. This experimental checkpoint implements
+safe loading, schema/DAG/reference validation, static CLI Doctor, async value/assert
+execution, SQLite history, and privacy-controlled recording primitives.
+HTTP execution, retries, replay, and execution-time Doctor remain planned.
 Only implement the session or task explicitly authorized by the owner.
 
 ## Architecture boundaries
@@ -51,6 +51,7 @@ uv run --locked mypy
 uv build --no-sources
 uv run --locked forgeflow --help
 uv run --locked python -m forgeflow --version
+uv run --locked python examples/demo.py
 ```
 
 For an intentional dependency change, use uv to generate the updated lockfile,
@@ -81,5 +82,8 @@ the source tree. Report the commands actually executed and their results.
 - Do not perform remote Git operations, create a repository/remote, push, publish,
   or create a release without explicit authorization for that action.
 - Do not make local commits or stage changes unless the owner requests it.
+- When the owner authorizes milestone commits/pushes, verify the milestone first,
+  preserve legitimate history, and never force-push. Repository instructions alone
+  do not authorize publication or account changes.
 - Report scope, files, checks, failures/limitations, decisions, and Git status.
   Stop at the authorized session boundary.

@@ -1,8 +1,10 @@
-# Workflow schema v1: structural validation
+# Workflow schema v1
 
-Session 2 implements loading and local structural validation through
+Loading and local structural validation are available through
 `forgeflow.workflow.load_workflow(path)` and `parse_workflow(content: bytes)`.
-Neither API executes a workflow. The CLI still exposes only help and version.
+Neither API executes a workflow. The CLI's `validate` and `doctor` commands add
+dependency and reference-target analysis. `run` executes only value/assert graphs;
+HTTP is schema-only in this checkpoint.
 
 ## Input and safety limits
 
@@ -40,12 +42,13 @@ There must be 1–100 steps with unique IDs. Unknown fields are rejected everywh
 Numbers are not coerced from strings or booleans. A step timeout omitted in YAML
 is represented as `None` in the model for future default resolution; explicitly
 setting it to null is invalid. Execution settings are validated but have no runtime
-effect until execution is implemented.
+effect only when a workflow is executed.
 
 Every step requires `id` and `type`. Step IDs, output names, and `needs` entries
 match `[a-z][a-z0-9_]{0,63}`. `needs` defaults to an empty list, permits at most
-100 entries, and cannot contain duplicate entries. This session does not check
-whether dependencies exist, are self-references, or form cycles.
+100 entries, and cannot contain duplicate entries. `load_workflow` checks these
+local constraints; `build_graph` and the CLI also reject missing dependencies,
+self-references, cycles, missing output targets, and implicit reference edges.
 
 ## Built-in step definitions
 
@@ -63,7 +66,7 @@ exactly one field:
 - `ref`: a string in the form `step_id.outputs.output_name`.
 
 Reference syntax is checked now. Producer existence, output existence, and
-explicit dependency membership will be validated in Session 3.
+explicit dependency membership are checked by `build_graph` and the CLI.
 
 ### HTTP
 
@@ -115,5 +118,5 @@ Pydantic's model APIs directly is intended for internal typed code, not for
 rendering untrusted validation errors. Do not log loaded workflow objects,
 raw Pydantic `.errors()`, exception locals, or parser internals.
 
-No graph analysis, request execution, database, recorder, replay, or web interface
-is implemented in this session.
+No HTTP execution, retries, offline replay, or web interface is implemented in
+this checkpoint. See the root README for the working execution/history commands.

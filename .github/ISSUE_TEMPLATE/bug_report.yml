@@ -1,0 +1,17 @@
+name: Bug report
+description: Report a reproducible problem using synthetic, sanitized inputs.
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Include the command, exit code, ForgeFlow/Python versions, and OS.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Use synthetic YAML only. Never upload credentials, raw histories, or private endpoints.
+    validations:
+      required: true

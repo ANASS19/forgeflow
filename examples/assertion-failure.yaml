@@ -1,0 +1,24 @@
+schema_version: 1
+name: assertion-failure
+steps:
+  - id: seed
+    type: value
+    values:
+      count: 1
+  - id: check
+    type: assert
+    needs: [seed]
+    left:
+      ref: seed.outputs.count
+    op: eq
+    right:
+      literal: 2
+  - id: blocked
+    type: value
+    needs: [check]
+    values:
+      message: skipped-because-check-failed
+  - id: independent
+    type: value
+    values:
+      message: this-branch-still-completes

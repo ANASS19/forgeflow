@@ -14,7 +14,7 @@ from forgeflow.cli_output import emit
 from forgeflow.config import data_directory
 from forgeflow.doctor import check_workflow
 from forgeflow.domain import ErrorCode, ForgeFlowError, exit_code
-from forgeflow.engine.runner import execute
+from forgeflow.engine.runner import ensure_supported, execute
 from forgeflow.storage.repository import Repository, Snapshot
 from forgeflow.workflow import WorkflowLoadError, load_workflow
 from forgeflow.workflow.graph import build_graph
@@ -41,10 +41,22 @@ def errors(json_output: bool) -> Iterator[None]:
         raise typer.Exit(2) from None
     except ForgeFlowError as error:
         emit(
-            {"status": "error", "code": error.code, "message": error.code.value},
+            {
+                "status": "error",
+                "code": error.code,
+                "message": (
+                    "This checkpoint executes value/assert steps only; HTTP execution is planned."
+                    if error.code == ErrorCode.ACTION_UNAVAILABLE
+                    else error.code.value
+                ),
+            },
             json_output=json_output,
         )
-        raise typer.Exit(2 if error.code.value.startswith("REPLAY_") else 3) from None
+        raise typer.Exit(
+            2
+            if error.code == ErrorCode.ACTION_UNAVAILABLE or error.code.value.startswith("REPLAY_")
+            else 3
+        ) from None
     except (SQLAlchemyError, OSError, ValueError):
         emit(
             {
@@ -83,10 +95,11 @@ def run(
     data_dir: DirectoryOption = None,
     json_output: JsonOption = False,
 ) -> None:
-    """Execute all steps in a fresh persistent run; parent links never reuse outputs."""
+    """Execute a value/assert workflow; parent links never reuse earlier outputs."""
     with errors(json_output):
         workflow = load_workflow(file)
         build_graph(workflow)
+        ensure_supported(workflow)
         findings = tuple(
             item for item in check_workflow(workflow, check_env=True) if item.severity == "error"
         )

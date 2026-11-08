@@ -13,7 +13,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "ForgeFlow contributors" }]
 keywords = ["workflow", "debugging", "cli", "local-first", "api"]
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 2 - Pre-Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3 :: Only",
@@ -58,6 +58,9 @@ include = [
     "/README.md",
     "/CONTRIBUTING.md",
     "/AGENTS.md",
+    "/ROADMAP.md",
+    "/SECURITY.md",
+    "/CODE_OF_CONDUCT.md",
     "/LICENSE",
     "/.python-version",
     "/.gitignore",
@@ -84,4 +87,4 @@ line-ending = "lf"
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["src", "tests"]
+files = ["src", "tests", "examples/demo.py"]

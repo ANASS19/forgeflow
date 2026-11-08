@@ -1,6 +1,6 @@
 # Contributing to ForgeFlow
 
-ForgeFlow is in its workflow-schema stage. Start with a small, verifiable
+ForgeFlow is an experimental workflow debugging project. Start with a small, verifiable
 change, and keep documentation clear about working and planned functionality.
 
 ## Environment
@@ -16,10 +16,10 @@ project dependencies globally. If the required Python interpreter is unavailable
 install it separately before running this command; automatic Python downloads
 are disabled by the documented setup command.
 
-Typer, Pydantic v2, and PyYAML are the direct runtime dependencies. pytest, Ruff,
-mypy, PyYAML typing stubs, and Hatchling are development dependencies.
-Hatchling is also the PEP 517 build backend and is
-installed locally so packaging tests can build without network access.
+Typer, Pydantic v2, PyYAML, SQLAlchemy, and Alembic are the direct runtime
+dependencies. pytest, pytest-asyncio, Ruff, mypy, PyYAML typing stubs, and Hatchling
+are development dependencies. Hatchling is also the PEP 517 build backend and
+is installed locally so packaging tests can build without network access.
 
 ## Required checks
 
@@ -32,6 +32,7 @@ uv run --locked mypy
 uv build --no-sources
 uv run --locked forgeflow --help
 uv run --locked python -m forgeflow --version
+uv run --locked python examples/demo.py
 ```
 
 The tests require uv on `PATH` and the dependencies installed by `uv sync`.
@@ -57,6 +58,8 @@ uv run --locked ruff format .
 - Dependency changes must include the corresponding `pyproject.toml` and lockfile
   changes. Do not upgrade unrelated packages as part of another task.
 - Keep package version changes in `src/forgeflow/__init__.py`; Hatchling reads it.
+- Keep schema migrations immutable; create a new revision for future changes.
+- Use temporary storage in tests. Do not create history in the repository root.
 - Document any user-facing behavior change. Do not add placeholders for features
   that are not part of the current task.
 
@@ -70,3 +73,7 @@ Submitting a contribution is under the project's Apache-2.0 license; contributor
 retain their applicable copyright. Automated agents must obtain explicit task
 authorization before remote Git operations, publishing, or releases. Local
 commits also require authorization when working on behalf of the owner.
+
+See [ROADMAP.md](ROADMAP.md) and existing GitHub issues for planned work. HTTP
+execution and replay are not current features. Keep implementation PRs focused
+on one tested behavior, describe remaining limitations, and link the relevant issue.

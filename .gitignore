@@ -24,6 +24,7 @@ coverage.xml
 *.p12
 *.pfx
 .forgeflow/
+writer.lock
 recordings/
 *.db
 *.db-*

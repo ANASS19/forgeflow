@@ -1,0 +1,15 @@
+name: Feature request
+description: Propose a focused improvement or discuss a roadmap item.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Developer problem and proposed behavior
+      description: Explain a concrete use case and check ROADMAP.md and existing issues first.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Acceptance criteria and trade-offs
+      description: Describe how the feature could be tested, including relevant privacy constraints.

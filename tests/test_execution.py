@@ -184,3 +184,22 @@ def test_privacy_and_recording_plan(tmp_path: Path) -> None:
     assert all(
         secret.encode() not in path.read_bytes() for path in tmp_path.glob("history.sqlite3*")
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("workflow_deadline", [False, True])
+async def test_timeouts_are_durable(tmp_path: Path, workflow_deadline: bool) -> None:
+    workflow = parse_workflow(_workflow())
+    workflow.execution.timeout_seconds = 1 if workflow_deadline else 300
+    workflow.defaults.attempt_timeout_seconds = 30 if workflow_deadline else 0.02
+
+    async def waiting(step: WorkflowStep, outputs: dict[str, dict[str, JsonValue]]) -> Outcome:
+        await asyncio.sleep(10)
+        return Outcome(State.SUCCEEDED)
+
+    with Repository(tmp_path, writable=True) as repository:
+        result = await execute(workflow, repository, handler=waiting)
+        assert result.state == (State.TIMED_OUT if workflow_deadline else State.FAILED)
+        snapshot = repository.snapshot(result.id)
+        assert all(state not in {State.PENDING, State.RUNNING} for state in snapshot.steps.values())
+        assert all(attempt.state != State.RUNNING for attempt in snapshot.attempts)

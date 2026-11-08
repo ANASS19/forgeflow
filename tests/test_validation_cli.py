@@ -44,3 +44,20 @@ def test_empty_history_does_not_initialize_storage(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert json.loads(result.output)["runs"] == []
     assert not directory.exists()
+
+
+def test_http_execution_is_explicitly_unavailable_before_storage(tmp_path: Path) -> None:
+    directory = tmp_path / "absent"
+    result = CliRunner().invoke(
+        app,
+        [
+            "run",
+            "examples/api-health.yaml",
+            "--data-dir",
+            str(directory),
+            "--json",
+        ],
+    )
+    assert result.exit_code == 2, result.output
+    assert json.loads(result.output)["code"] == "WORKFLOW_ACTION_UNAVAILABLE"
+    assert not directory.exists()

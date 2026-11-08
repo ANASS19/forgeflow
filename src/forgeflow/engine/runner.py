@@ -13,16 +13,22 @@ from forgeflow.engine.pure import execute_pure
 from forgeflow.recorder.privacy import Privacy
 from forgeflow.storage.repository import Repository, StorageWorker
 from forgeflow.workflow.graph import WorkflowStep, build_graph
-from forgeflow.workflow.models import AssertStep, ValueStep, Workflow
+from forgeflow.workflow.models import AssertStep, HttpStep, ValueStep, Workflow
 
 type Handler = Callable[[WorkflowStep, dict[str, dict[str, JsonValue]]], Awaitable[Outcome]]
 _DEFAULT_PRIVACY = Privacy()
 
 
+def ensure_supported(workflow: Workflow) -> None:
+    """Refuse planned actions before initializing a run or dispatching any work."""
+    if any(isinstance(step, HttpStep) for step in workflow.steps):
+        raise ForgeFlowError(ErrorCode.ACTION_UNAVAILABLE)
+
+
 async def default_handler(step: WorkflowStep, outputs: dict[str, dict[str, JsonValue]]) -> Outcome:
     if isinstance(step, (ValueStep, AssertStep)):
         return execute_pure(step, outputs)
-    raise ForgeFlowError(ErrorCode.INTERNAL)
+    raise ForgeFlowError(ErrorCode.ACTION_UNAVAILABLE)
 
 
 async def execute(
@@ -35,6 +41,8 @@ async def execute(
     progress: Callable[[str, State], None] | None = None,
 ) -> RunResult:
     graph = build_graph(workflow)
+    if handler is default_handler:
+        ensure_supported(workflow)
     steps = {step.id: step for step in workflow.steps}
     states = {step.id: State.PENDING for step in workflow.steps}
     outputs: dict[str, dict[str, JsonValue]] = {}

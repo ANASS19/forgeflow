@@ -175,6 +175,23 @@ def test_wheel_import_is_isolated(installed_wheel: WheelInstallation) -> None:
     assert module_path.is_relative_to(installed_wheel.environment.resolve())
 
 
+def test_wheel_executes_and_persists_outside_repository(installed_wheel: WheelInstallation) -> None:
+    source = Path(__file__).resolve().parents[1] / "examples" / "values.yaml"
+    directory = installed_wheel.working_directory / "history"
+    options = ["--data-dir", str(directory), "--json"]
+    result = _run(
+        [installed_wheel.python, "-I", "-m", "forgeflow", "run", source, *options],
+        cwd=installed_wheel.working_directory,
+    )
+    payload = json.loads(result.stdout)
+    assert payload["state"] == "SUCCEEDED"
+    history = _run(
+        [installed_wheel.python, "-I", "-m", "forgeflow", "history", *options],
+        cwd=installed_wheel.working_directory,
+    )
+    assert json.loads(history.stdout)["runs"][0]["id"] == payload["id"]
+
+
 @pytest.mark.parametrize("entrypoint", ["console", "module"])
 @pytest.mark.parametrize("arguments", [[], ["--help"], ["--version"]])
 def test_wheel_cli_outside_repository(
