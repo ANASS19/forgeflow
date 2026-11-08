@@ -4,9 +4,9 @@
 
 ForgeFlow is an independent, open-source, local-first workflow execution and
 debugging system for API developers. The current implementation is Sprint 1,
-Session 2: an installable package with CLI help/version and a Python API for safe
-YAML loading and structural schema validation. Graph/reference-target analysis,
-execution, storage, Doctor, replay, and CLI workflow commands are not implemented.
+MVP development: safe loading, schema/DAG/reference validation, and static CLI
+Doctor are implemented. Execution, storage, recording, and replay are being added
+in verified milestones under the owner's autonomous-development authorization.
 Only implement the session or task explicitly authorized by the owner.
 
 ## Architecture boundaries

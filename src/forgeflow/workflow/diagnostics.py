@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import ValidationError
 
@@ -40,6 +41,15 @@ class DiagnosticCode(StrEnum):
     CAPTURE = "HTTP_CAPTURE_INVALID"
     HEAD_CAPTURE = "HTTP_HEAD_CAPTURE_FORBIDDEN"
     TRUNCATED = "DIAGNOSTICS_TRUNCATED"
+    DEPENDENCY_MISSING = "DEPENDENCY_MISSING"
+    DEPENDENCY_SELF = "DEPENDENCY_SELF"
+    CYCLE = "DEPENDENCY_CYCLE"
+    REFERENCE_MISSING = "REFERENCE_STEP_MISSING"
+    REFERENCE_OUTPUT = "REFERENCE_OUTPUT_MISSING"
+    REFERENCE_DEPENDENCY = "REFERENCE_DEPENDENCY_REQUIRED"
+    CAPTURE_NONE = "DOCTOR_CAPTURE_NONE"
+    RETRY_BUDGET = "DOCTOR_RETRY_BUDGET"
+    SECRET_MISSING = "SECRET_MISSING"
 
 
 _MESSAGES = {
@@ -76,6 +86,15 @@ _MESSAGES = {
     DiagnosticCode.CAPTURE: "Use a non-root JSON pointer and do not overwrite status_code.",
     DiagnosticCode.HEAD_CAPTURE: "HEAD requests cannot declare JSON-body captures.",
     DiagnosticCode.TRUNCATED: "Additional validation diagnostics have been omitted.",
+    DiagnosticCode.DEPENDENCY_MISSING: "The dependency does not identify a declared step.",
+    DiagnosticCode.DEPENDENCY_SELF: "A step cannot depend on itself.",
+    DiagnosticCode.CYCLE: "Dependencies contain a cycle; related locations show the cycle path.",
+    DiagnosticCode.REFERENCE_MISSING: "The reference producer does not identify a declared step.",
+    DiagnosticCode.REFERENCE_OUTPUT: "The referenced output is not declared by its producer.",
+    DiagnosticCode.REFERENCE_DEPENDENCY: "A reference producer must be explicitly listed in needs.",
+    DiagnosticCode.CAPTURE_NONE: "No response fields are captured; only HTTP status is available.",
+    DiagnosticCode.RETRY_BUDGET: "The worst-case attempt budget exceeds the workflow deadline.",
+    DiagnosticCode.SECRET_MISSING: "A required environment-secret variable is absent or empty.",
 }
 
 
@@ -85,6 +104,8 @@ class Diagnostic:
     location: tuple[str | int, ...] = ()
     line: int | None = None
     column: int | None = None
+    severity: Literal["error", "warning", "info"] = "error"
+    related: tuple[tuple[str | int, ...], ...] = ()
 
     @property
     def message(self) -> str:
@@ -100,6 +121,10 @@ class Diagnostic:
             result["line"] = self.line
         if self.column is not None:
             result["column"] = self.column
+        if self.severity != "error":
+            result["severity"] = self.severity
+        if self.related:
+            result["related"] = [list(location) for location in self.related]
         return result
 
 
