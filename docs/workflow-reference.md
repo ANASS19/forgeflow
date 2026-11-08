@@ -124,5 +124,15 @@ bodies and implicit redirects are unsupported; uncaptured/HEAD bodies are not re
 Secret variables must be present and resolve to printable ASCII header text.
 Secret values remain in memory and are registered with the existing recording privacy filter.
 
-Only one attempt is executed. `retry.max_attempts` greater than one is rejected
-until retry support lands. Offline replay and a web interface are not implemented.
+`retry.max_attempts` counts total attempts, not additional retries (default 1,
+maximum 5). Eligible failures are HTTP 408/429/502/503/504, transient connection/
+read/write errors, and timeouts. TLS/protocol, JSON, capture, and size errors do
+not retry. An explicitly accepted HTTP status is success even if otherwise retryable.
+Backoff uses exponential full jitter (0.5-second base, 5-second cap). Valid
+`Retry-After` delta-seconds or HTTP dates are honored up to 30 seconds. Backoff
+releases the concurrency slot; dependencies wait for a final successful outcome.
+No retry is scheduled when its delay cannot fit the workflow deadline.
+Cancellation and the workflow deadline interrupt pending waits. A new run always
+executes fresh; retries never imply exactly-once external behavior.
+
+Offline replay and a web interface are not implemented.

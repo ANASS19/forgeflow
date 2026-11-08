@@ -32,6 +32,8 @@ Exit codes: 0 success; 1 workflow failure; 2 invalid workflow/arguments or unava
 action; 3 storage/lock/infrastructure failure; 124 workflow deadline; 130 cancellation.
 An exhausted attempt timeout fails its step and therefore the workflow with code 1.
 
-HTTP executes one attempt; `retry.max_attempts` greater than one is currently
-rejected before storage or request dispatch. There is no `replay`
+HTTP executes one attempt by default. Set `retry.max_attempts` from 1 to 5 to
+retry eligible transient failures. Each attempt and chosen delay appears in
+inspection history. A delay that cannot fit the remaining workflow budget is
+not scheduled; the final attempt outcome is retained. There is no `replay`
 command yet. `doctor` currently analyzes workflow files, not prior executions.

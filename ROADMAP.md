@@ -16,6 +16,7 @@ for learning, testing, and debugging small pure-step workflows locally.
 - OS writer exclusion, abandoned-run recovery, fresh linked runs, and explicit pruning.
 - Offline success/failure demonstration and cross-platform CI configuration.
 - HTTPX GET/HEAD execution, bounded explicit JSON captures, secret preflight, and loopback tests.
+- Basic bounded retries with exponential jitter, capped Retry-After, released slots, and attempt history.
 
 ## Completed: initial safe HTTP execution
 
@@ -25,11 +26,10 @@ for learning, testing, and debugging small pure-step workflows locally.
 - Normalized outcomes without raw URLs, headers, query strings, or exception text.
 - Mock-transport and loopback API tests without public service credentials.
 
-## Bounded retries and recovery hardening
+## Remaining retry and recovery hardening
 
-- Add observable retry decisions, exponential jitter, and bounded `Retry-After` handling.
-- Release concurrency slots during retry waits; respect the workflow deadline.
-- Classify transient versus permanent failures conservatively.
+- Extend the implemented bounded retries with more deterministic timing/fault-injection tests.
+- Verify deadline-edge behavior and cancellation during database writes and partial body reads.
 - Add forced-termination, database-failure, migration, and cancellation-race tests.
 - Preserve unknown external outcomes honestly; do not claim exactly-once execution.
 

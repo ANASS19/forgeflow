@@ -74,6 +74,6 @@ retain their applicable copyright. Automated agents must obtain explicit task
 authorization before remote Git operations, publishing, or releases. Local
 commits also require authorization when working on behalf of the owner.
 
-See [ROADMAP.md](ROADMAP.md) and existing GitHub issues for planned work. Retry
-scheduling and replay are not current features. Keep implementation PRs focused
+See [ROADMAP.md](ROADMAP.md) and existing GitHub issues for planned work. Replay
+is not a current feature. Keep implementation PRs focused
 on one tested behavior, describe remaining limitations, and link the relevant issue.

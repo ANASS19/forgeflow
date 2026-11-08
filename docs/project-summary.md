@@ -31,8 +31,9 @@ availability. A runnable local demonstration exercises real success and failure.
 
 ## Planned development
 
-The next intended contributions are bounded and
-observable retries, stronger failure-recovery testing, execution-time Doctor
+Basic bounded HTTP retries are implemented, with per-attempt history and
+deadline-aware backoff. The next intended contributions are stronger failure-recovery
+and timing tests, execution-time Doctor
 diagnostics, and a versioned Flight Recorder with offline replay. Replay must
 reject missing evidence and must never repeat a network request as a fallback.
 
@@ -42,5 +43,5 @@ The modular monolith and local SQLite store keep deployment simple. One active
 writer per database simplifies ownership and recovery, while steps may run
 concurrently. Strict YAML and built-in actions trade flexibility for a bounded
 execution model. Stored values are plaintext and privacy filtering is heuristic.
-Retries, replay, distributed workers, and a web UI are not current
+Replay, distributed workers, and a web UI are not current
 features. This checkpoint is not a production or exactly-once reliability claim.

@@ -12,6 +12,7 @@ from pydantic import JsonValue
 from forgeflow.domain import ErrorCode, ForgeFlowError, Outcome, State
 from forgeflow.engine.http_data import MAX_RESPONSE_BYTES, json_pointer, parse_response
 from forgeflow.engine.pure import execute_pure, resolve
+from forgeflow.engine.retry import parse_retry_after
 from forgeflow.recorder.privacy import MAX_CAPTURE_BYTES, Privacy, encoded
 from forgeflow.workflow.graph import WorkflowStep
 from forgeflow.workflow.models import HeaderSecret, HttpStep, Workflow
@@ -60,8 +61,6 @@ class HttpHandler:
         for step in workflow.steps:
             if not isinstance(step, HttpStep):
                 continue
-            if step.retry.max_attempts > 1:
-                raise ForgeFlowError(ErrorCode.ACTION_UNAVAILABLE)
             headers: dict[str, str] = {"Accept-Encoding": "identity"}
             for name, operand in step.request.headers.items():
                 if isinstance(operand, HeaderSecret):
@@ -131,6 +130,9 @@ class HttpHandler:
                 code=ErrorCode.HTTP_STATUS,
                 status_code=status,
                 retryable=status in {408, 429, 502, 503, 504},
+                retry_after=parse_retry_after(response.headers.get("Retry-After"))
+                if status in {408, 429, 502, 503, 504}
+                else None,
             )
         captured: dict[str, JsonValue] = {"status_code": status}
         try:

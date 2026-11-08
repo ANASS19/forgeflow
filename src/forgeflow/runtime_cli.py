@@ -46,7 +46,7 @@ def errors(json_output: bool) -> Iterator[None]:
                 "status": "error",
                 "code": error.code,
                 "message": (
-                    "HTTP retries beyond one attempt are not implemented in this checkpoint."
+                    "The requested workflow action is unavailable."
                     if error.code == ErrorCode.ACTION_UNAVAILABLE
                     else error.code.value
                 ),

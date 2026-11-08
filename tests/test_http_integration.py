@@ -28,7 +28,13 @@ def local_api() -> Iterator[tuple[str, list[str]]]:
             body = json.dumps(
                 {"status": "ok", "value": 7, "uncaptured": "SYNTHETIC_BODY_ONLY"}
             ).encode()
-            self.send_response(200 if self.path.startswith("/health") else 404)
+            if self.path == "/transient":
+                status = 503 if requests.count("GET /transient") == 1 else 200
+            else:
+                status = 200 if self.path.startswith("/health") else 404
+            self.send_response(status)
+            if status == 503:
+                self.send_header("Retry-After", "0")
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
@@ -182,3 +188,37 @@ async def test_cookies_are_not_shared_between_attempts() -> None:
     await handler(step, {})
     await handler(step, {})
     assert len(requests) == 2
+
+
+def test_cli_retries_a_temporary_loopback_failure(
+    tmp_path: Path,
+    local_api: tuple[str, list[str]],
+) -> None:
+    url, requests = local_api
+    source = tmp_path / "workflow.yaml"
+    source.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "name": "local-retry",
+                "steps": [
+                    {
+                        "id": "fetch",
+                        "type": "http",
+                        "retry": {"max_attempts": 3},
+                        "request": {"method": "GET", "url": url + "/transient"},
+                        "capture": {"value": "/value"},
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    directory = tmp_path / "data"
+    result = CliRunner().invoke(app, ["run", str(source), "--data-dir", str(directory), "--json"])
+    assert result.exit_code == 0, result.output
+    with Repository(directory) as repository:
+        attempts = repository.snapshot(json.loads(result.output)["id"]).attempts
+    assert requests == ["GET /transient", "GET /transient"]
+    assert [item.status_code for item in attempts] == [503, 200]
+    assert attempts[0].retry_delay is not None and 0 <= attempts[0].retry_delay <= 0.5

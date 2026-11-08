@@ -232,6 +232,7 @@ async def test_transport_failure_codes(kind: str, code: Code) -> None:
     handler = HttpHandler(source, transport_factory=lambda: httpx.MockTransport(fail))
     result = await handler(step(source), {})
     assert result.code == code
+    assert result.retryable is (kind not in {"tls", "protocol"})
     assert "SYNTHETIC_PRIVATE_ERROR" not in repr(result)
 
 

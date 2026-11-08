@@ -1,7 +1,7 @@
 # Architecture and failure semantics
 
 ForgeFlow is a typed Python modular monolith. The current execution engine runs
-value/assert steps and HTTP GET/HEAD, with one attempt per step.
+value/assert steps and HTTP GET/HEAD, with bounded opt-in retries for transient HTTP failures.
 
 ## Boundaries
 
@@ -28,8 +28,10 @@ Runs start pending conceptually, persist as running, and terminate as succeeded,
 failed, timed out, cancelled, or interrupted. Steps pass through readiness and
 running; failed dependencies make downstream steps skipped with causal IDs.
 Independent branches continue after ordinary failure. Attempts have independent
-terminal outcomes. Retry-wait state exists for future retry support; no retries
-are performed by this checkpoint.
+terminal outcomes. Eligible HTTP failures enter retry-wait only when attempt and
+deadline budgets permit it. Backoff releases the active-attempt slot; the scheduler
+can dispatch independent steps while dependants continue waiting. Chosen delays
+and each attempt are persisted through the existing atomic transition boundary.
 
 One OS advisory lock owns mutating commands per database. WAL permits readers
 alongside that writer. Foreign keys, FULL synchronization, a bounded busy timeout,

@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from forgeflow.cli import app
@@ -46,9 +47,13 @@ def test_empty_history_does_not_initialize_storage(tmp_path: Path) -> None:
     assert not directory.exists()
 
 
-def test_retry_configuration_is_explicitly_unavailable_before_storage(tmp_path: Path) -> None:
+def test_missing_http_secret_is_rejected_before_storage(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     directory = tmp_path / "absent"
     source = tmp_path / "workflow.yaml"
+    monkeypatch.delenv("FORGEFLOW_MISSING_TEST_SECRET", raising=False)
     source.write_text(
         json.dumps(
             {
@@ -58,7 +63,13 @@ def test_retry_configuration_is_explicitly_unavailable_before_storage(tmp_path: 
                     {
                         "id": "fetch",
                         "type": "http",
-                        "request": {"method": "GET", "url": "https://example.test"},
+                        "request": {
+                            "method": "GET",
+                            "url": "https://example.test",
+                            "headers": {
+                                "Authorization": {"secret": "FORGEFLOW_MISSING_TEST_SECRET"},
+                            },
+                        },
                         "retry": {"max_attempts": 2},
                     }
                 ],
@@ -77,5 +88,5 @@ def test_retry_configuration_is_explicitly_unavailable_before_storage(tmp_path: 
         ],
     )
     assert result.exit_code == 2, result.output
-    assert json.loads(result.output)["code"] == "WORKFLOW_ACTION_UNAVAILABLE"
+    assert json.loads(result.output)["diagnostics"][0]["code"] == "SECRET_MISSING"
     assert not directory.exists()

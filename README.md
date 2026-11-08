@@ -22,8 +22,9 @@ The broader API-workflow debugging product is actively being developed.
 | SQLite history, inspection, fresh linked runs | Working |
 | Abandoned-run recovery and explicit history pruning | Working |
 | Atomic attempt events and privacy-filtered output recording | Working foundation |
-| HTTP GET/HEAD with explicit JSON captures | Working; one attempt per step |
-| Bounded retries, full Flight Recorder, offline replay | Planned |
+| HTTP GET/HEAD with explicit JSON captures | Working |
+| Basic bounded retries for temporary HTTP failures | Working; one attempt by default, maximum five |
+| Full Flight Recorder and offline replay | Planned |
 | Shell execution, distributed workers, web UI | Outside the initial MVP |
 
 ```text
@@ -34,7 +35,8 @@ python -m forgeflow --help
 
 Running `forgeflow` without arguments also displays help. HTTP workflows contact
 the destinations explicitly declared in their files; review workflows before running them.
-Retries beyond one attempt are rejected explicitly until retry scheduling is implemented.
+Retries are opt-in through `retry.max_attempts`; waits release concurrency slots
+and remain bounded by the workflow deadline.
 
 ## Try a working demonstration
 
@@ -142,7 +144,7 @@ minimal metadata and explicitly selected response fields. Offline replay will
 fail clearly if required recorded values are unavailable and will never fall
 back to live requests. HTTP HEAD steps will not support JSON-body captures.
 
-Retry scheduling and replay are not implemented. There is no arbitrary-code or
+Offline replay is not implemented. There is no arbitrary-code or
 subprocess workflow action planned for the MVP, and no exactly-once execution
 guarantee. See [ROADMAP.md](ROADMAP.md) for completed and upcoming milestones.
 
@@ -183,7 +185,11 @@ See [architecture and failure semantics](docs/architecture.md).
 - HTTP is restricted to GET/HEAD with TLS verification, no redirects or ambient
   proxies/cookies, a 1 MiB JSON-response limit, and explicit captures. Compressed
   response bodies are not supported. No full response body is recorded.
-- HTTP retries beyond one attempt, replay, and execution-time Doctor remain planned.
+- Retry policy is deliberately conservative: HTTP 408/429/502/503/504, connection/read/write
+  failures, and timeouts are eligible; TLS/protocol errors and invalid captures are not.
+  Backoff uses exponential full jitter and honors valid `Retry-After`, capped at 30 seconds.
+- Replay and execution-time Doctor remain planned. Recovery/storage fault injection
+  and deterministic timing tests need further hardening.
 - Recovery marks abandoned work interrupted; it never resumes it automatically.
 - Local SQLite storage must be on a local disk, not a network/synchronized folder.
 - Stored captured values are plaintext. Filtering is conservative and heuristic;

@@ -4,6 +4,8 @@ name: local-http-health
 steps:
   - id: fetch
     type: http
+    retry:
+      max_attempts: 3
     request:
       method: GET
       url: http://127.0.0.1:8000/health.json
