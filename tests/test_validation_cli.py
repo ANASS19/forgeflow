@@ -24,3 +24,23 @@ def test_invalid_input_is_sanitized(tmp_path: Path) -> None:
     assert payload["output_version"] == 1
     assert payload["diagnostics"][0]["code"] == "YAML_SYNTAX_INVALID"
     assert "SYNTHETIC_CANARY" not in result.output
+
+
+def test_run_history_and_inspection(tmp_path: Path) -> None:
+    runner = CliRunner()
+    options = ["--data-dir", str(tmp_path), "--json"]
+    result = runner.invoke(app, ["run", "examples/values.yaml", *options])
+    assert result.exit_code == 0, result.output
+    run_id = json.loads(result.output)["id"]
+    history = runner.invoke(app, ["history", *options])
+    assert json.loads(history.output)["runs"][0]["id"] == run_id
+    inspected = runner.invoke(app, ["inspect", run_id, *options])
+    assert json.loads(inspected.output)["state"] == "SUCCEEDED"
+
+
+def test_empty_history_does_not_initialize_storage(tmp_path: Path) -> None:
+    directory = tmp_path / "absent"
+    result = CliRunner().invoke(app, ["history", "--data-dir", str(directory), "--json"])
+    assert result.exit_code == 0
+    assert json.loads(result.output)["runs"] == []
+    assert not directory.exists()
