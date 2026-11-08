@@ -1,0 +1,11 @@
+# Intentionally invalid: HEAD has no JSON response-body capture contract.
+schema_version: 1
+name: invalid-head
+steps:
+  - id: probe
+    type: http
+    request:
+      method: HEAD
+      url: https://api.example.test/health
+    capture:
+      service_state: /status

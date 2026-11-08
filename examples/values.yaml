@@ -1,0 +1,16 @@
+schema_version: 1
+name: values
+steps:
+  - id: seed
+    type: value
+    values:
+      count: 2
+      enabled: true
+  - id: check
+    type: assert
+    needs: [seed]
+    left:
+      ref: seed.outputs.count
+    op: eq
+    right:
+      literal: 2

@@ -5,9 +5,10 @@ execution and debugging system for API developers.
 
 ## Current status
 
-**Project foundation: `0.1.0.dev0`.** The package is installable and provides a
-typed Typer CLI with help and version information. Automated tests cover package
-imports, CLI behavior, and installation of a built wheel in an isolated environment.
+**Workflow schema foundation: `0.1.0.dev0`.** The package provides a typed Python
+API for safe YAML loading and structural validation, plus a Typer CLI with help
+and version information. Automated tests cover hostile YAML, schema constraints,
+sanitized diagnostics, and installation of a wheel in an isolated environment.
 
 ```text
 forgeflow --help
@@ -15,9 +16,34 @@ forgeflow --version
 python -m forgeflow --help
 ```
 
-Running `forgeflow` without arguments also displays help. Workflow parsing,
-validation, execution, history, Doctor diagnostics, and replay are **planned**;
-they are not implemented in this release.
+Running `forgeflow` without arguments also displays help. CLI workflow commands,
+dependency/reference-target validation, execution, history, Doctor diagnostics,
+and replay are **planned**; they are not implemented in this release.
+
+## Load a workflow from Python
+
+```python
+from forgeflow.workflow import WorkflowLoadError, load_workflow
+
+try:
+    workflow = load_workflow("examples/api-health.yaml")
+except WorkflowLoadError as error:
+    for diagnostic in error.diagnostics:
+        print(diagnostic.to_dict())
+else:
+    print(workflow.name, len(workflow.steps))
+```
+
+`parse_workflow(content: bytes)` validates an in-memory UTF-8 document using the
+same bounds. Both entry points return typed schema-v1 objects and raise
+`WorkflowLoadError` with safe diagnostic codes, locations, and explanations for
+invalid input. Loading never sends requests or resolves secrets. Do not log full
+workflow objects: successfully loaded literals and request configuration may
+contain sensitive data.
+
+See [the workflow reference](docs/workflow-reference.md) for supported fields,
+limits, and the deliberately restricted YAML subset. Valid and intentionally
+invalid fixtures are in `examples/`.
 
 ## Local installation
 
@@ -41,13 +67,13 @@ data directory is created by the current CLI.
 ## Planned MVP
 
 The first MVP is intended to support YAML dependency graphs, HTTP GET/HEAD,
-built-in value and assertion steps, bounded retries, persistent history, and
+built-in value and assertion execution, bounded retries, persistent history, and
 actionable Workflow Doctor diagnostics. An Execution Flight Recorder will retain
 minimal metadata and explicitly selected response fields. Offline replay will
 fail clearly if required recorded values are unavailable and will never fall
 back to live requests. HTTP HEAD steps will not support JSON-body captures.
 
-These are design boundaries, not claims of working functionality. There is no
+Only loading and local structural validation of these steps work today. There is no
 arbitrary-code or subprocess workflow action planned for the MVP, and no
 exactly-once execution guarantee.
 
@@ -56,9 +82,10 @@ exactly-once execution guarantee.
 - `src/forgeflow/__init__.py`: package version, also used by the build backend.
 - `src/forgeflow/cli.py`: Typer application and package-information options.
 - `src/forgeflow/__main__.py`: `python -m forgeflow` entry point.
+- `src/forgeflow/workflow/`: bounded loader, strict models, and safe diagnostics.
 - `tests/`: CLI, import, distribution metadata, and isolated-install checks.
 
-Future workflow, execution, recording, and storage modules will be added when
+Future graph, execution, recording, and storage modules will be added when
 their behavior is implemented. The intended architecture is a modular monolith.
 
 ## Development

@@ -1,0 +1,36 @@
+# Synthetic endpoint and environment-variable name; loading performs no requests.
+schema_version: 1
+name: api-health
+execution:
+  concurrency: 4
+  timeout_seconds: 300
+defaults:
+  attempt_timeout_seconds: 30
+steps:
+  - id: fetch
+    type: http
+    request:
+      method: GET
+      url: https://api.example.test/health
+      headers:
+        Accept:
+          literal: application/json
+        Authorization:
+          secret: FORGEFLOW_EXAMPLE_TOKEN
+          prefix: "Bearer "
+      query:
+        verbose:
+          literal: false
+    expect_status: [200]
+    capture:
+      service_state: /status
+    retry:
+      max_attempts: 3
+  - id: check
+    type: assert
+    needs: [fetch]
+    left:
+      ref: fetch.outputs.service_state
+    op: eq
+    right:
+      literal: ok

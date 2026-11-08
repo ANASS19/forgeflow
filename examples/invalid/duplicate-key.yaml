@@ -1,0 +1,9 @@
+# Intentionally invalid: duplicate mapping keys are never silently overwritten.
+schema_version: 1
+name: first-name
+name: second-name
+steps:
+  - id: seed
+    type: value
+    values:
+      count: 1

@@ -4,8 +4,9 @@
 
 ForgeFlow is an independent, open-source, local-first workflow execution and
 debugging system for API developers. The current implementation is Sprint 1,
-Session 1: an installable package with help and version information. Workflow
-parsing, validation, execution, storage, Doctor, and replay are not implemented.
+Session 2: an installable package with CLI help/version and a Python API for safe
+YAML loading and structural schema validation. Graph/reference-target analysis,
+execution, storage, Doctor, replay, and CLI workflow commands are not implemented.
 Only implement the session or task explicitly authorized by the owner.
 
 ## Architecture boundaries
@@ -15,7 +16,7 @@ Only implement the session or task explicitly authorized by the owner.
 - Keep the CLI thin. Future workflow/domain code must not depend on Typer,
   HTTPX, or SQLAlchemy. Future handlers must not directly update database rows.
 - The planned MVP actions are HTTP GET/HEAD, literal values, and assertions.
-  Future HTTP HEAD steps must reject JSON-body captures.
+  HTTP HEAD steps must reject JSON-body captures.
 - No arbitrary workflow code execution, Python expressions, dynamic imports,
   shell commands, or user-supplied plugins. Development tests may invoke known
   Python and uv executables with explicit argument lists and no shell.

@@ -1,6 +1,6 @@
 # Contributing to ForgeFlow
 
-ForgeFlow is in its project-foundation stage. Start with a small, verifiable
+ForgeFlow is in its workflow-schema stage. Start with a small, verifiable
 change, and keep documentation clear about working and planned functionality.
 
 ## Environment
@@ -16,8 +16,9 @@ project dependencies globally. If the required Python interpreter is unavailable
 install it separately before running this command; automatic Python downloads
 are disabled by the documented setup command.
 
-Typer is the only direct runtime dependency. pytest, Ruff, mypy, and Hatchling are
-development dependencies. Hatchling is also the PEP 517 build backend and is
+Typer, Pydantic v2, and PyYAML are the direct runtime dependencies. pytest, Ruff,
+mypy, PyYAML typing stubs, and Hatchling are development dependencies.
+Hatchling is also the PEP 517 build backend and is
 installed locally so packaging tests can build without network access.
 
 ## Required checks
@@ -35,8 +36,9 @@ uv run --locked python -m forgeflow --version
 
 The tests require uv on `PATH` and the dependencies installed by `uv sync`.
 Packaging tests use temporary directories, build an sdist and a wheel from that
-sdist, install only the wheel and its locked runtime dependencies in a separate
-virtual environment, and run both CLI entry points outside the checkout. They
+sdist, sync runtime dependencies directly from `uv.lock` into a temporary environment,
+install only the wheel into that environment, and run both CLI entry points
+and the workflow-loading API outside the checkout. They
 run offline using the populated uv cache; they do not reuse development
 site-packages or modify the checkout's `.venv`.
 

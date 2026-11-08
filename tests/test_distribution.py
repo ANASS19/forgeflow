@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -30,7 +31,12 @@ class WheelInstallation:
         return self.scripts / ("python.exe" if sys.platform == "win32" else "python")
 
 
-def _run(arguments: list[str | Path], *, cwd: Path) -> subprocess.CompletedProcess[str]:
+def _run(
+    arguments: list[str | Path],
+    *,
+    cwd: Path,
+    extra_environment: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     environment = {
         **os.environ,
         "UV_OFFLINE": "1",
@@ -38,6 +44,7 @@ def _run(arguments: list[str | Path], *, cwd: Path) -> subprocess.CompletedProce
         "NO_COLOR": "1",
         "TERM": "dumb",
         "COLUMNS": "120",
+        **(extra_environment or {}),
     }
     result = subprocess.run(
         [str(argument) for argument in arguments],
@@ -79,23 +86,6 @@ def installed_wheel(tmp_path_factory: pytest.TempPathFactory) -> WheelInstallati
     assert len(wheels) == 1
     assert len(list(artifacts.glob("*.tar.gz"))) == 1
 
-    runtime_requirements = _run(
-        [
-            uv,
-            "export",
-            "--locked",
-            "--offline",
-            "--no-dev",
-            "--no-emit-project",
-            "--no-hashes",
-            "--no-header",
-            "--no-annotate",
-        ],
-        cwd=project,
-    )
-    constraints = workspace / "runtime-constraints.txt"
-    constraints.write_text(runtime_requirements.stdout, encoding="utf-8")
-
     installation = WheelInstallation(workspace / "environment", workspace, wheels[0])
     _run(
         [
@@ -112,13 +102,27 @@ def installed_wheel(tmp_path_factory: pytest.TempPathFactory) -> WheelInstallati
     _run(
         [
             uv,
+            "sync",
+            "--locked",
+            "--offline",
+            "--no-dev",
+            "--no-install-project",
+            "--no-python-downloads",
+            "--python",
+            installation.python,
+        ],
+        cwd=project,
+        extra_environment={"UV_PROJECT_ENVIRONMENT": str(installation.environment)},
+    )
+    _run(
+        [
+            uv,
             "pip",
             "install",
             "--offline",
             "--python",
             installation.python,
-            "--constraint",
-            constraints,
+            "--no-deps",
             installation.wheel,
         ],
         cwd=workspace,
@@ -140,8 +144,10 @@ def test_wheel_metadata_and_contents(installed_wheel: WheelInstallation) -> None
     assert set(requires_python.split(",")) == {">=3.12", "<3.13"}
     assert metadata["License-Expression"] == "Apache-2.0"
     requirements = metadata.get_all("Requires-Dist", [])
-    assert len(requirements) == 1
-    assert requirements[0].startswith("typer")
+    assert {
+        re.split(r"[<>=!~\[;\s]", requirement, maxsplit=1)[0].lower()
+        for requirement in requirements
+    } == {"typer", "pydantic", "pyyaml"}
     assert "forgeflow/py.typed" in names
     assert any(name.endswith(".dist-info/licenses/LICENSE") for name in names)
     assert not any(name.startswith(("tests/", ".venv/", ".git/")) for name in names)
@@ -154,6 +160,10 @@ def test_wheel_import_is_isolated(installed_wheel: WheelInstallation) -> None:
             "-I",
             "-c",
             "import importlib.metadata, importlib.util, json, forgeflow; "
+            "from forgeflow.workflow import parse_workflow; "
+            'assert parse_workflow(b\'{"schema_version": 1, "name": "wheel", '
+            '"steps": [{"id": "seed", "type": "value", "values": {"x": 1}}]}\').name '
+            "== 'wheel'; "
             "assert importlib.util.find_spec('pytest') is None; "
             "assert forgeflow.__version__ == importlib.metadata.version('forgeflow'); "
             "print(json.dumps({'module': forgeflow.__file__}))",
